@@ -41,7 +41,8 @@ def transaction_menu(user_pin):
         choice = input("Enter your choice:")
 
         if choice == "1":
-            print(f"Your balance is Ksh:{users[user_pin]['balance'}")
+            print(f"Your balance is Ksh:{users[user_pin]['balance']:,.2f}")
+
         elif choice =="2":
             amount = float(input("Enter deposit amount:"))
             if amount<=0:
@@ -49,8 +50,8 @@ def transaction_menu(user_pin):
             else:
                 users[user_pin]["balance"] += amount
                 timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
-                transaction_history.append(f"[{timestamp}]+ Ksh {amount:,.2f}")
-                print(f"Ksh{amount:,.2f} deposited successfully New balance: Ksh{balance:,.2f}")
+                users[user_pin]["transactions"].append(f"[{timestamp}]+ Ksh {amount:,.2f}")
+                print(f"Ksh{amount:,.2f} deposited successfully New balance: Ksh{users[user_pin]['balance']:,.2f}")
 
         elif choice =="3":
             amount = float(input("Enter amount to withdraw:"))
@@ -61,15 +62,15 @@ def transaction_menu(user_pin):
             else:
                 users[user_pin]["balance"] -=amount
                 timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
-                transaction_history.append(f"[{timestamp}]- Ksh{amount:,.2f}")
-                print(f"Ksh{amount} Withdrawn successfully New balance:Ksh{balance:,.2f}")
+                users[user_pin]["transactions"].append(f"[{timestamp}]- Ksh{amount:,.2f}")
+                print(f"Ksh{amount} Withdrawn successfully New balance:Ksh{users[user_pin]['balance']:,.2f}")
 
         elif choice =="4":
             print("\n Transaction history ")
-            if not transaction_history:
+            if not users[user_pin]["transactions"]:
                 print("No Transaction yet")
             else:
-                for i, transaction in enumerate(transaction_history, start=1):
+                for i, transaction in enumerate(users[user_pin]["transactions"], start=1):
                     print(f"{i}.{transaction}")
 
         elif choice =="5":
