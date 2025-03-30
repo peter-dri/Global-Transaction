@@ -1,19 +1,14 @@
 import time
-import json
-import os
+import mysql.connector
+
+conn = mysql.connector.connect(
+    host="localhost",
+    user="root",
+    password="",
+    database="pk_transactions"
+)
+cursor = conn.cursor()
 print("WELCOME TO PK's Global Transaction")
-users_file = "users.json"
-def load_users():
-    if os.path.exists(users_file):
-        with open(users_file, "r") as file:
-            return json.load(file)
-    return {}
-
-def save_users():
-    with open(users_file, "w") as file:
-        json.dump(users, file, indent=4)
-
-users = load_users()
 
 def create_account():
     '''Create a new user account with unique pin'''
@@ -22,8 +17,15 @@ def create_account():
         if not pin.isdigit() or len(pin) != 4:
             print("Pin must be four")
             continue
-        users[pin] = {"balance": 0.0, "transactions": []}
-        print(f"Account Created successfully")
+
+        cursor.execute("SELECT pin FROM users WHERE pin = %s", (pin,))
+        if cursor.fetchone():
+            print("This PIN already exists! Choose a different one.")
+            continue
+
+        cursor.execute("INSERT INTO users (pin, balance) VALUES (%s, %s)", (pin, 0.0))
+        conn.commit()
+        print("Account created successfully!")
         return pin
 
 def login():
@@ -31,7 +33,8 @@ def login():
     attempts = 3
     while attempts > 0:
         pin = input("Enter your PIN: ")
-        if pin in users:
+        cursor.execute("SELECT pin FROM users WHERE pin = %s", (pin,))
+        if cursor.fetchone():
             print("Login successful! Welcome to your account.")
             return pin
         else:
@@ -40,6 +43,55 @@ def login():
                 print("Too many incorrect attempts! \n Try again later.")
                 exit()
             print(f"Incorrect PIN {attempts} attempts left.")
+
+def get_balance(user_pin):
+    """Fetches the user's balance from the database."""
+    cursor.execute("SELECT balance FROM users WHERE pin = %s", (user_pin,))
+    result = cursor.fetchone()
+    return result[0] if result else 0.0
+
+def deposit(user_pin):
+    try:
+        amount = float(input("Enter deposit amount: "))
+        if amount <= 0:
+            print("Invalid amount! Must be greater than 0.")
+        else:
+            cursor.execute("UPDATE users SET balance = balance + %s WHERE pin = %s", (amount, user_pin))
+            cursor.execute("INSERT INTO transactions (pin, amount, type) VALUES (%s, %s, 'Deposit')", 
+                           (user_pin, amount))
+            conn.commit()
+            print(f"Ksh {amount:,.2f} deposited successfully! New balance: Ksh {get_balance(user_pin):,.2f}")
+    except ValueError:
+        print("Invalid input! Enter a numeric value.")
+
+def withdraw(user_pin):
+    try:
+        amount = float(input("Enter withdrawal amount: "))
+        balance = get_balance(user_pin)
+        if amount <= 0:
+            print("Invalid amount!")
+        elif amount > balance:
+            print("Insufficient funds!")
+        else:
+            cursor.execute("UPDATE users SET balance = balance - %s WHERE pin = %s", (amount, user_pin))
+            cursor.execute("INSERT INTO transactions (pin, amount, type) VALUES (%s, %s, 'Withdrawal')", 
+                           (user_pin, -amount))
+            conn.commit()
+            print(f"Ksh {amount:,.2f} withdrawn successfully! New balance: Ksh {get_balance(user_pin):,.2f}")
+    except ValueError:
+        print("Invalid input! Enter a numeric value.")
+
+def view_transactions(user_pin):
+    cursor.execute("SELECT timestamp, amount, type FROM transactions WHERE pin = %s ORDER BY id DESC", (user_pin,))
+    transactions = cursor.fetchall()
+    
+    print("\nTransaction History:")
+    if not transactions:
+        print("No transactions yet!")
+    else:
+        for i, (timestamp, amount, type) in enumerate(transactions, start=1):
+            sign = "+" if type == "Deposit" else "-"
+            print(f"{i}. [{timestamp}] {sign}Ksh {abs(amount):,.2f}")
 
 def transaction_menu(user_pin):
     '''Displays the ATM menu for a logged-in user.'''
@@ -54,44 +106,22 @@ def transaction_menu(user_pin):
         choice = input("Enter your choice:")
 
         if choice == "1":
-            print(f"Your balance is Ksh:{users[user_pin]['balance']:,.2f}")
+            print(f"Your balance is Ksh:{get_balance(user_pin):,.2f}")
 
         elif choice =="2":
-            amount = float(input("Enter deposit amount:"))
-            if amount<=0:
-                print("Invalid amount. Deposit amount greater than 0")
-            else:
-                users[user_pin]["balance"] += amount
-                timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
-                users[user_pin]["transactions"].append(f"[{timestamp}]+ Ksh {amount:,.2f}")
-                print(f"Ksh{amount:,.2f} deposited successfully New balance: Ksh{users[user_pin]['balance']:,.2f}")
+            deposit(user_pin)
 
         elif choice =="3":
-            amount = float(input("Enter amount to withdraw:"))
-            if amount<=0:
-                print("Invalid amount")
-            elif amount > users[user_pin]["balance"]:
-                print("Insufficient funds in the account!")
-            else:
-                users[user_pin]["balance"] -=amount
-                timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
-                users[user_pin]["transactions"].append(f"[{timestamp}]- Ksh{amount:,.2f}")
-                print(f"Ksh{amount} Withdrawn successfully New balance:Ksh{users[user_pin]['balance']:,.2f}")
-
+           withdraw(user_pin)
         elif choice =="4":
-            print("\n Transaction history ")
-            if not users[user_pin]["transactions"]:
-                print("No Transaction yet")
-            else:
-                for i, transaction in enumerate(users[user_pin]["transactions"], start=1):
-                    print(f"{i}.{transaction}")
+           view_transactions(user_pin)
 
         elif choice =="5":
             print("Thanks for using PK's Global Transaction. See you soon ☺")
             time.sleep(1)
             break
         else:
-            print("Invalid choice! Enter options 1-5")
+            print("Invalid Enter options 1-5")
 while True:
     print("\n WELCOME TO PK's Global Transaction")
     print("1.Create a New Account")
@@ -105,15 +135,14 @@ while True:
         transaction_menu(new_pin)
 
     elif main_choice == "2":
-        if not users:
-            print("No accounts exist yet! Please create an account first.")
-            continue
         user_pin = login()
         transaction_menu(user_pin)
 
     elif main_choice == "3":
         print("Thanks for using PK's Global Transaction")
+        cursor.close()
+        conn.close()
         break
 
     else:
-        print("Invalid choice! Please enter 1, 2, or 3.")
+        print("Invalid Enter option 1-3.")
