@@ -1,29 +1,43 @@
 import time
 print("WELCOME TO PK's Global Transaction")
-balance=1000.0
-pin="2222"
 transaction_history = []
-attempts = 3
+users = {}
 
-while attempts >0:
-    user_pin = input("Enter your Pin:")
-    if user_pin == pin:
-        print("Login successful in your account")
-        break
-    else:
-        attempts -=1
-        if attempts ==0:
-            print("Too many attempts! Account locked")
-            exit()
-        print(f"Incorrect pin {attempts} attempts left")
+def create_account():
+    '''Create a new user account with unique pin'''
+    while True:
+        pin = input("Enter 4-digit pin:")
+        if not pin.isdigit() or len(pin) != 4:
+            print("Pin must be four")
+            continue
+        users[pin] = {"balance": 0.0, "transactions": []}
+        print(f"Account Created successfully")
+        return pin
+    
+def login():
+    """Handles user login with PIN authentication."""
+    attempts = 3
+    while attempts > 0:
+        pin = input("Enter your PIN: ")
+        if pin in users:
+            print("Login successful! Welcome to your account.")
+            return pin
+        else:
+            attempts -= 1
+            if attempts == 0:
+                print("Too many incorrect attempts! \n Try again later.")
+                exit()
+            print(f"Incorrect PIN {attempts} attempts left.")
 
-while True:
-    print("\nchoose option:")
-    print("1. Check balance")
-    print("2. Deposit money")
-    print("3. Withdraw money")
-    print("4. View transaction history ")
-    print("5. Exit")
+def Global_Transaction_menu(user_pin):
+    '''Displays the ATM menu for a logged-in user.'''
+    while True:
+        print("\nchoose option:")
+        print("1. Check balance")
+        print("2. Deposit money")
+        print("3. Withdraw money")
+        print("4. View transaction history ")
+        print("5. Exit ")
 
     choice = input("Enter your choice:")
 
@@ -62,6 +76,30 @@ while True:
     elif choice =="5":
         print("Thanks for using PK's Global Transaction. See you soon ☺")
         time.sleep(1)
-        break
     else:
         print("Invalid choice! Enter options 1-5")
+while True:
+    print("\n WELCOME TO PK's Global Transaction")
+    print("1.Create a New Account")
+    print("2. Login to Existing Account")
+    print("3. Exit")
+
+    main_choice = input("Enter your choice: ")
+
+    if main_choice == "1":
+        new_pin = create_account()
+        Global_Transaction_menu(new_pin)
+
+    elif main_choice == "2":
+        if not users:
+            print("No accounts exist yet! Please create an account first.")
+            continue
+        user_pin = login()
+        Global_Transaction_menu(user_pin)
+
+    elif main_choice == "3":
+        print("Thanks for using PK's Global Transaction")
+        break
+
+    else:
+        print("Invalid choice! Please enter 1, 2, or 3.")
