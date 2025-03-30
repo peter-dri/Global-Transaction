@@ -1,6 +1,5 @@
 import time
 print("WELCOME TO PK's Global Transaction")
-transaction_history = []
 users = {}
 
 def create_account():
@@ -13,7 +12,7 @@ def create_account():
         users[pin] = {"balance": 0.0, "transactions": []}
         print(f"Account Created successfully")
         return pin
-    
+
 def login():
     """Handles user login with PIN authentication."""
     attempts = 3
@@ -29,7 +28,7 @@ def login():
                 exit()
             print(f"Incorrect PIN {attempts} attempts left.")
 
-def Global_Transaction_menu(user_pin):
+def transaction_menu(user_pin):
     '''Displays the ATM menu for a logged-in user.'''
     while True:
         print("\nchoose option:")
@@ -39,45 +38,45 @@ def Global_Transaction_menu(user_pin):
         print("4. View transaction history ")
         print("5. Exit ")
 
-    choice = input("Enter your choice:")
+        choice = input("Enter your choice:")
 
-    if choice == "1":
-        print(f"Your balance is Ksh:{balance:,.2f}")
-    elif choice =="2":
-        amount = float(input("Enter deposit amount:"))
-        if amount<=0:
-            print("Invalid amount. Deposit amount greater than 0")
+        if choice == "1":
+            print(f"Your balance is Ksh:{users[user_pin]['balance'}")
+        elif choice =="2":
+            amount = float(input("Enter deposit amount:"))
+            if amount<=0:
+                print("Invalid amount. Deposit amount greater than 0")
+            else:
+                users[user_pin]["balance"] += amount
+                timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+                transaction_history.append(f"[{timestamp}]+ Ksh {amount:,.2f}")
+                print(f"Ksh{amount:,.2f} deposited successfully New balance: Ksh{balance:,.2f}")
+
+        elif choice =="3":
+            amount = float(input("Enter amount to withdraw:"))
+            if amount<=0:
+                print("Invalid amount")
+            elif amount > users[user_pin]["balance"]:
+                print("Insufficient funds in the account!")
+            else:
+                users[user_pin]["balance"] -=amount
+                timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+                transaction_history.append(f"[{timestamp}]- Ksh{amount:,.2f}")
+                print(f"Ksh{amount} Withdrawn successfully New balance:Ksh{balance:,.2f}")
+
+        elif choice =="4":
+            print("\n Transaction history ")
+            if not transaction_history:
+                print("No Transaction yet")
+            else:
+                for i, transaction in enumerate(transaction_history, start=1):
+                    print(f"{i}.{transaction}")
+
+        elif choice =="5":
+            print("Thanks for using PK's Global Transaction. See you soon ☺")
+            time.sleep(1)
         else:
-            balance += amount
-            timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
-            transaction_history.append(f"[{timestamp}]+ Ksh {amount:,.2f}")
-            print(f"Ksh{amount:,.2f} deposited successfully New balance: Ksh{balance:,.2f}")
-
-    elif choice =="3":
-        amount = float(input("Enter amount to withdraw:"))
-        if amount<=0:
-            print("Invalid amount")
-        elif amount > balance:
-            print("Insufficient funds in the account!")
-        else:
-            balance -=amount
-            timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
-            transaction_history.append(f"[{timestamp}]- Ksh{amount:,.2f}")
-            print(f"Ksh{amount} Withdrawn successfully New balance:Ksh{balance:,.2f}")
-
-    elif choice =="4":
-        print("\n Transaction history ")
-        if not transaction_history:
-            print("No Transaction yet")
-        else:
-            for i, transaction in enumerate(transaction_history, start=1):
-                print(f"{i}.{transaction}")
-
-    elif choice =="5":
-        print("Thanks for using PK's Global Transaction. See you soon ☺")
-        time.sleep(1)
-    else:
-        print("Invalid choice! Enter options 1-5")
+            print("Invalid choice! Enter options 1-5")
 while True:
     print("\n WELCOME TO PK's Global Transaction")
     print("1.Create a New Account")
@@ -88,14 +87,14 @@ while True:
 
     if main_choice == "1":
         new_pin = create_account()
-        Global_Transaction_menu(new_pin)
+        transaction_menu(new_pin)
 
     elif main_choice == "2":
         if not users:
             print("No accounts exist yet! Please create an account first.")
             continue
         user_pin = login()
-        Global_Transaction_menu(user_pin)
+        transaction_menu(user_pin)
 
     elif main_choice == "3":
         print("Thanks for using PK's Global Transaction")
