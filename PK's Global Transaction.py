@@ -1,6 +1,19 @@
 import time
+import json
+import os
 print("WELCOME TO PK's Global Transaction")
-users = {}
+users_file = "users.json"
+def load_users():
+    if os.path.exists(users_file):
+        with open(users_file, "r") as file:
+            return json.load(file)
+    return {}
+
+def save_users():
+    with open(users_file, "w") as file:
+        json.dump(users, file, indent=4)
+
+users = load_users()
 
 def create_account():
     '''Create a new user account with unique pin'''
@@ -76,6 +89,7 @@ def transaction_menu(user_pin):
         elif choice =="5":
             print("Thanks for using PK's Global Transaction. See you soon ☺")
             time.sleep(1)
+            break
         else:
             print("Invalid choice! Enter options 1-5")
 while True:
