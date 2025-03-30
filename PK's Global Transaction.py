@@ -60,7 +60,7 @@ while True:
                 print(f"{i}.{transaction}")
 
     elif choice =="5":
-        print("Thanks for using PK's Global Transaction. See you soon")
+        print("Thanks for using PK's Global Transaction. See you soon ☺")
         time.sleep(1)
         break
     else:
